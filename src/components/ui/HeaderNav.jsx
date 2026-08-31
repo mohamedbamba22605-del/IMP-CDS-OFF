@@ -25,7 +25,15 @@ export default function HeaderNav({ currentUser, activeTab, setActiveTab, onLogo
 
   return (
     <>
-      <header className="sticky top-0 z-[100] bg-[#0A1128]/95 backdrop-blur-xl border-b border-amber-500/20 shadow-2xl px-3 sm:px-6 py-2.5 sm:py-3 text-white">
+      {/* HEADER AVEC PROTECTION SAFE AREA (IPHONE DYNAMIC ISLAND / NOTCH / ANDROID) */}
+      <header 
+        className="sticky top-0 z-[100] bg-[#0A1128]/98 backdrop-blur-2xl border-b border-amber-500/20 shadow-2xl px-3.5 sm:px-6 pb-2.5 sm:pb-3 text-white transition-all"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top, 0px), 14px)',
+          paddingLeft: 'max(env(safe-area-inset-left, 0px), 14px)',
+          paddingRight: 'max(env(safe-area-inset-right, 0px), 14px)'
+        }}
+      >
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
 
           {/* ── BRANDING INSTITUTIONNEL ── */}
@@ -128,7 +136,10 @@ export default function HeaderNav({ currentUser, activeTab, setActiveTab, onLogo
 
       {/* ── TIROIR MOBILE COMPLET (DRAWER) ── */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 z-[99] bg-black/80 backdrop-blur-md pt-20 p-4 animate-in fade-in duration-200">
+        <div 
+          className="md:hidden fixed inset-0 z-[150] bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-200"
+          style={{ paddingTop: 'max(env(safe-area-inset-top, 0px), 70px)' }}
+        >
           <div className="bg-[#0B192C] border border-slate-800 rounded-3xl p-5 shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
             {/* Profil Mobile */}
             <div className="p-3.5 bg-slate-900/80 border border-slate-800 rounded-2xl flex items-center justify-between">

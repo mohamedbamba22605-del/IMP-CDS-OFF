@@ -13,18 +13,47 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Gestion universelle des Safe Areas (iPhone Notch / Dynamic Island / Android Cutouts) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+  --sar: env(safe-area-inset-right, 0px);
 }
 
 * {
   box-sizing: border-box;
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
   min-width: 320px;
   min-height: 100vh;
-  overflow-x: hidden;
+  min-height: -webkit-fill-available;
+  background-color: #0A1128;
   background: radial-gradient(circle at 50% 0%, #0B192C 0%, #0A1128 70%, #030712 100%);
+  color: #f1f5f9;
+}
+
+/* Classes utilitaires de zone sécurisée (iOS / Android / PWA) */
+.safe-header-padding {
+  padding-top: max(env(safe-area-inset-top, 0px), 12px);
+  padding-left: max(env(safe-area-inset-left, 0px), 12px);
+  padding-right: max(env(safe-area-inset-right, 0px), 12px);
+}
+
+.safe-bottom-padding {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+}
+
+/* Masquer la barre de scroll tout en gardant le défilement */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Scrollbar personnalisée */
@@ -70,14 +99,4 @@ body {
   background: rgba(15, 23, 42, 0.6);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-/* Animations custom */
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.85; transform: scale(0.99); }
-}
-
-.animate-pulse-subtle {
-  animation: pulse-subtle 4s ease-in-out infinite;
 }
