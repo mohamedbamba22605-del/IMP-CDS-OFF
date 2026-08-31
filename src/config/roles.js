@@ -28,7 +28,7 @@ export const ROLES = {
     id: "DIRECTEUR_GENERAL",
     label: "Directeur Général & Cofondateur",
     shortLabel: "DG",
-    description: "Supervise les activités opérationnelles. Coordonne les responsables, dirige les réunions, mène les procédures disciplinaires et informe régulièrement le CEO.",
+    description: "Supervise les activités opérationnelles. Coordonne les responsables, dirige les réunions, mène les procédures disciplinaires, attribue les rôles et informe régulièrement le CEO.",
     color: "#00F2FE",
     badgeBg: "bg-cyan-500/20 text-cyan-300 border-cyan-500/40",
     level: 90,
@@ -191,7 +191,7 @@ export const ROLES = {
     canVeto: false,
     hierarchyLevel: 6,
     permissions: [
-      "view_radio_qg"
+      "view_radio_qg", "submit_report"
     ]
   },
 
@@ -209,10 +209,24 @@ export const ROLES = {
     permissions: [
       "submit_report"
     ]
+  },
+
+  // ━━━ STATUT D'ATTENTE INITIAL ━━━
+  EN_ATTENTE: {
+    id: "EN_ATTENTE",
+    label: "En Attente d'Affectation",
+    shortLabel: "En Attente",
+    description: "Nouveau compte enregistré. En attente de nomination officielle et d'attribution de poste par le Directeur Général ou le CEO.",
+    color: "#9CA3AF",
+    badgeBg: "bg-gray-700/40 text-gray-300 border-gray-600",
+    level: 0,
+    canVeto: false,
+    hierarchyLevel: 8,
+    permissions: []
   }
 };
 
-export const DEFAULT_ROLE = ROLES.CEO;
+export const DEFAULT_ROLE = ROLES.EN_ATTENTE;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -234,6 +248,11 @@ export const isDG = (userRole) => {
   return roleId === 'DIRECTEUR_GENERAL';
 };
 
+export const canManageRoles = (userRole) => {
+  const roleId = typeof userRole === 'string' ? userRole : userRole?.id;
+  return ['CEO', 'DIRECTEUR_GENERAL'].includes(roleId) || hasPermission(roleId, 'manage_roles');
+};
+
 export const isHierarchy = (userRole) => {
   const roleId = typeof userRole === 'string' ? userRole : userRole?.id;
   return ['CEO', 'DIRECTEUR_GENERAL'].includes(roleId);
@@ -244,6 +263,10 @@ export const canSubmitReport = (userRole) => {
   return hasPermission(roleId, 'submit_report');
 };
 
-// Retourne un tableau ordonné des rôles par niveau hiérarchique
+// Retourne les 12 rôles officiels nominables par le DG/CEO (exclut EN_ATTENTE)
+export const getAssignableRoles = () =>
+  Object.values(ROLES).filter(r => r.id !== 'EN_ATTENTE').sort((a, b) => a.hierarchyLevel - b.hierarchyLevel);
+
+// Retourne tous les rôles ordonnés
 export const getRolesOrdered = () =>
   Object.values(ROLES).sort((a, b) => a.hierarchyLevel - b.hierarchyLevel);

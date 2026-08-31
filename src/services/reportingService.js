@@ -1,84 +1,8 @@
 // src/services/reportingService.js
 import { db } from '../firebase';
-import { collection, addDoc, getDocs, doc, query, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, query, orderBy } from 'firebase/firestore';
 import { logSecurityEvent } from './rbacService';
 import { fileToDataUri } from './treasuryService';
-
-// Données de démo initiales pour les rapports triennaux
-const DEMO_REPORTS = [
-  {
-    id: "REP-2026-001",
-    periodStart: "2026-08-25",
-    periodEnd: "2026-08-28",
-    authorId: "secgen-uid",
-    authorName: "Secrétaire Général",
-    authorRole: "SECRETAIRE_GENERAL",
-    department: "Secrétariat Général",
-    summary: "Rapport d'activité triennal sur la finalisation des inscriptions et la préparation de la rentrée académique.",
-    achievements: [
-      "Validation de 145 dossiers d'inscription des nouveaux apprenants",
-      "Organisation de la réunion préparatoire avec la Direction des Études",
-      "Archivage des 3 derniers PV de conseils de discipline"
-    ],
-    blockers: [
-      "Retard de livraison des badges magnétiques étudiants par le fournisseur"
-    ],
-    nextActions: [
-      "Relance du fournisseur pour les badges d'accès au campus",
-      "Rédaction de la Note de Service N°04 sur le règlement intérieur"
-    ],
-    submittedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    status: "submitted"
-  },
-  {
-    id: "REP-2026-002",
-    periodStart: "2026-08-22",
-    periodEnd: "2026-08-25",
-    authorId: "ops-uid",
-    authorName: "Responsable Opérations & Logistique",
-    authorRole: "RESPONSABLE_OPERATIONS",
-    department: "Opérations",
-    summary: "Bilan logistique et maintenance des installations pédagogiques.",
-    achievements: [
-      "Installation du nouveau réseau WiFi Haute Performance dans l'Amphi 1",
-      "Audit des 25 postes informatiques du Laboratoire IA"
-    ],
-    blockers: [],
-    nextActions: [
-      "Commande des vidéoprojecteurs de rechange"
-    ],
-    submittedAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-    status: "submitted"
-  }
-];
-
-// Données de démo pour les Procès-Verbaux (PV) et Notes de Service
-const DEMO_ARCHIVES = [
-  {
-    id: "ARCH-2026-001",
-    title: "Procès-Verbal du Conseil d'Administration N°12",
-    type: "PV",
-    category: "Gouvernance",
-    fileName: "PV_Conseil_Administration_CDS_2026.pdf",
-    fileUrl: "data:application/pdf;base64,JVBERi0xLjQKJ...",
-    contentSummary: "Délibération sur le budget prévisionnel 2026-2027 et l'extension du campus.",
-    createdBy: "secgen-uid",
-    createdByName: "Secrétaire Général",
-    createdAt: new Date(Date.now() - 86400000 * 4).toISOString()
-  },
-  {
-    id: "ARCH-2026-002",
-    title: "Note de Service N°03 - Directive Sécurité & Assiduité",
-    type: "NOTE_SERVICE",
-    category: "Règlement Interne",
-    fileName: "Note_Service_03_CDS.pdf",
-    fileUrl: "data:application/pdf;base64,JVBERi0xLjQKJ...",
-    contentSummary: "Règles d'accès aux locaux et obligation de soumission des rapports triennaux.",
-    createdBy: "ceo-uid",
-    createdByName: "CEO Capital du Savoir",
-    createdAt: new Date(Date.now() - 86400000 * 8).toISOString()
-  }
-];
 
 const STORAGE_REPORTS_KEY = 'imperium_cds_reports';
 const STORAGE_ARCHIVES_KEY = 'imperium_cds_archives';
@@ -110,7 +34,7 @@ export const submitTriennialReport = async (reportData, user) => {
 };
 
 /**
- * Récupère tous les rapports triennaux
+ * Récupère tous les rapports triennaux (État 0 : aucun rapport par défaut)
  */
 export const getTriennialReports = async () => {
   try {
@@ -118,11 +42,11 @@ export const getTriennialReports = async () => {
     const snap = await getDocs(q);
     const list = [];
     snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-    if (list.length > 0) return list;
+    return list;
   } catch (e) {
-    console.warn("Utilisation rapports démo locaux:", e);
+    console.warn("Erreur chargement rapports Firestore:", e);
+    return getLocalReports();
   }
-  return getLocalReports();
 };
 
 /**
@@ -165,7 +89,7 @@ export const addArchiveDocument = async ({ title, type, category, contentSummary
 };
 
 /**
- * Récupère les archives sécurisées (PV & Notes)
+ * Récupère les archives sécurisées (PV & Notes) (État 0 : aucune archive par défaut)
  */
 export const getArchiveDocuments = async () => {
   try {
@@ -173,21 +97,20 @@ export const getArchiveDocuments = async () => {
     const snap = await getDocs(q);
     const list = [];
     snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-    if (list.length > 0) return list;
+    return list;
   } catch (e) {
-    console.warn("Utilisation archives démo locales:", e);
+    console.warn("Erreur chargement archives Firestore:", e);
+    return getLocalArchives();
   }
-  return getLocalArchives();
 };
 
-// HELPERS DE STOCKAGE LOCAL
+// HELPERS DE STOCKAGE LOCAL ÉTAT 0
 const getLocalReports = () => {
   try {
     const data = localStorage.getItem(STORAGE_REPORTS_KEY);
     if (data) return JSON.parse(data);
   } catch (e) {}
-  localStorage.setItem(STORAGE_REPORTS_KEY, JSON.stringify(DEMO_REPORTS));
-  return DEMO_REPORTS;
+  return [];
 };
 
 const getLocalArchives = () => {
@@ -195,6 +118,5 @@ const getLocalArchives = () => {
     const data = localStorage.getItem(STORAGE_ARCHIVES_KEY);
     if (data) return JSON.parse(data);
   } catch (e) {}
-  localStorage.setItem(STORAGE_ARCHIVES_KEY, JSON.stringify(DEMO_ARCHIVES));
-  return DEMO_ARCHIVES;
+  return [];
 };

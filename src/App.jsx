@@ -11,8 +11,8 @@ import { auth, loginWithGoogle, logoutUser } from './firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { getUserProfile } from './services/rbacService';
 import { createTdrProject } from './services/crmService';
-import { Sparkles, Shield, Loader2 } from './components/ui/Icons';
-import { hasPermission } from './config/roles';
+import { Sparkles, Shield, Loader2, Clock, LogOut, RefreshCw } from './components/ui/Icons';
+import { hasPermission, ROLES } from './config/roles';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -21,29 +21,34 @@ export default function App() {
   const [loginError, setLoginError] = useState('');
   const [activeTab, setActiveTab] = useState('citadelle');
 
+  const fetchProfile = async (firebaseUser) => {
+    try {
+      const profile = await getUserProfile(firebaseUser);
+      setCurrentUser(profile);
+
+      // Définir l'onglet par défaut selon le rôle
+      if (profile.role === 'DIRECTEUR_GENERAL' || profile.role === 'CEO') {
+        setActiveTab('pegazus'); // Ouvre directement Pégazus pour que le DG puisse gérer les effectifs
+      } else if (hasPermission(profile.role, 'view_citadelle')) {
+        setActiveTab('citadelle');
+      } else if (hasPermission(profile.role, 'view_radio_qg')) {
+        setActiveTab('radio_qg');
+      } else if (hasPermission(profile.role, 'view_arsenal')) {
+        setActiveTab('arsenal');
+      } else if (hasPermission(profile.role, 'use_jarvis')) {
+        setActiveTab('jarvis');
+      }
+    } catch (e) {
+      console.error("Erreur chargement profil:", e);
+    }
+  };
+
   useEffect(() => {
     // Écoute de l'état d'authentification Firebase
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setAuthLoading(true);
       if (user) {
-        try {
-          const profile = await getUserProfile(user);
-          setCurrentUser(profile);
-          // Choisir l'onglet approprié selon les permissions de l'utilisateur
-          if (hasPermission(profile.role, 'view_citadelle')) {
-            setActiveTab('citadelle');
-          } else if (hasPermission(profile.role, 'view_radio_qg')) {
-            setActiveTab('radio_qg');
-          } else if (hasPermission(profile.role, 'view_arsenal')) {
-            setActiveTab('arsenal');
-          } else if (hasPermission(profile.role, 'use_jarvis')) {
-            setActiveTab('jarvis');
-          } else {
-            setActiveTab('radio_qg');
-          }
-        } catch (e) {
-          console.error("Erreur chargement profil:", e);
-        }
+        await fetchProfile(user);
       } else {
         setCurrentUser(null);
       }
@@ -59,8 +64,7 @@ export default function App() {
     try {
       const user = await loginWithGoogle();
       if (user) {
-        const profile = await getUserProfile(user);
-        setCurrentUser(profile);
+        await fetchProfile(user);
       }
     } catch (e) {
       console.error("Erreur connexion Google:", e);
@@ -81,6 +85,14 @@ export default function App() {
 
   const handleRoleChange = (newRole) => {
     setCurrentUser(prev => ({ ...prev, role: newRole }));
+  };
+
+  const handleRefreshMyProfile = async () => {
+    if (auth.currentUser) {
+      setAuthLoading(true);
+      await fetchProfile(auth.currentUser);
+      setAuthLoading(false);
+    }
   };
 
   const handleSendTdrToArsenal = async (tdrData) => {
@@ -120,7 +132,59 @@ export default function App() {
     );
   }
 
-  // ── ÉTAT CONNECTÉ : APPLICATION OFFICIELLE ──
+  // ── ÉTAT : COMPTE EN ATTENTE D'AFFECTATION PAR LE DG / CEO ──
+  if (currentUser.role === 'EN_ATTENTE') {
+    return (
+      <div className="min-h-screen bg-[#0A1128] flex items-center justify-center p-4 text-white">
+        <div className="max-w-md w-full p-8 bg-[#0B192C]/90 border border-slate-800 rounded-3xl backdrop-blur-xl shadow-2xl text-center space-y-5">
+          <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center justify-center mx-auto text-amber-400">
+            <Clock className="w-8 h-8 animate-pulse" />
+          </div>
+
+          <div>
+            <span className="px-3 py-1 bg-gray-700/40 text-gray-300 border border-gray-600 rounded-full text-[10px] font-mono font-bold uppercase">
+              Compte Enregistré
+            </span>
+            <h2 className="text-xl font-bold uppercase tracking-wider text-white font-serif mt-3">
+              En Attente d'Affectation
+            </h2>
+            <p className="text-xs text-gray-400 font-mono mt-1">
+              Bienvenue, <strong className="text-white">{currentUser.displayName || currentUser.email}</strong>
+            </p>
+          </div>
+
+          <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-xs text-gray-300 leading-relaxed text-left font-sans space-y-2">
+            <p>
+              Votre compte a été créé avec succès sur la plateforme officielle de <strong>Capital du Savoir</strong>.
+            </p>
+            <p className="text-gray-400 font-mono text-[11px]">
+              Conformément à la Note d'Information N° 0002, le <strong>Directeur Général</strong> ou le <strong>CEO</strong> doit valider votre nomination à l'un des 12 postes officiels pour débloquer vos accès.
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={handleRefreshMyProfile}
+              className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase font-mono rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-700"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Vérifier mon statut</span>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="px-4 py-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold text-xs uppercase font-mono rounded-xl transition-all border border-red-500/30 flex items-center gap-1.5"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Déconnexion</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── ÉTAT CONNECTÉ ET NOMMÉ : APPLICATION ERP OFFICIELLE ──
   return (
     <div className="min-h-screen bg-[#0A1128] text-slate-100 font-sans selection:bg-amber-500 selection:text-black">
 
@@ -144,7 +208,7 @@ export default function App() {
       {/* CONTENU PRINCIPAL PAR MODULE */}
       <main className="max-w-7xl mx-auto px-4 py-6">
 
-        {/* MODULE 1 : PÉGAZUS IAM (CEO / DG) */}
+        {/* MODULE 1 : PÉGAZUS IAM (DG & CEO) */}
         {activeTab === 'pegazus' && (
           <RoleGuard userRole={currentUser.role} requiredPermission="view_pegazus">
             <PegazusManager

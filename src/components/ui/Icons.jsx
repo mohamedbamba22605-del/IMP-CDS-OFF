@@ -13,5 +13,5 @@ export {
   PieChart, UserMinus, UserPlus, CalendarClock, Briefcase, 
   Infinity, Unlock, Key, Fingerprint, FileText, Info, 
   Search, RefreshCw, Download, Upload, Copy, Castle,
-  Volume2, VolumeX, Eye, LogIn, Filter, Mail
+  Volume2, VolumeX, Eye, LogIn, Filter, Mail, Users, UserCheck
 } from 'lucide-react';

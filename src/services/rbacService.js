@@ -1,6 +1,6 @@
 // src/services/rbacService.js
 import { db } from '../firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, serverTimestamp, query, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, addDoc, query, orderBy, limit } from 'firebase/firestore';
 import { ROLES, DEFAULT_ROLE } from '../config/roles';
 
 /**
@@ -15,16 +15,19 @@ export const getUserProfile = async (user) => {
     if (userSnap.exists()) {
       return { id: userSnap.id, ...userSnap.data() };
     } else {
-      // Vérifier si des utilisateurs existent déjà pour désigner l'administrateur initial (DG)
-      let initialRole = 'STAFF';
+      // Vérifier si des utilisateurs existent déjà dans Firestore
+      let initialRole = 'EN_ATTENTE';
+      let initialDept = 'Non affecté';
+
       try {
         const allUsersSnap = await getDocs(collection(db, 'users'));
         if (allUsersSnap.empty) {
-          // Premier utilisateur qui se connecte pour lancer la production : DIRECTEUR_GENERAL
+          // Premier utilisateur qui lance la production : DIRECTEUR_GENERAL
           initialRole = 'DIRECTEUR_GENERAL';
+          initialDept = 'Direction Générale';
         }
       } catch (e) {
-        console.warn("Vérification existence users:", e);
+        console.warn("Vérification existence users Firestore:", e);
       }
 
       const newProfile = {
@@ -33,13 +36,14 @@ export const getUserProfile = async (user) => {
         displayName: user.displayName || user.email?.split('@')[0] || 'Officier CDS',
         photoURL: user.photoURL || null,
         role: initialRole,
-        department: initialRole === 'DIRECTEUR_GENERAL' ? 'Direction Générale' : 'Staff Général',
+        department: initialDept,
         status: 'active',
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString()
       };
+
       await setDoc(userRef, newProfile);
-      await logSecurityEvent(user.uid, 'USER_REGISTERED', `Enregistrement du compte avec le rôle ${initialRole}`);
+      await logSecurityEvent(user.uid, 'USER_REGISTERED', `Enregistrement du compte ${user.email} avec le rôle ${initialRole}`);
       return newProfile;
     }
   } catch (error) {
@@ -48,21 +52,23 @@ export const getUserProfile = async (user) => {
       uid: user.uid,
       email: user.email || 'officier@capitaldusavoir.org',
       displayName: user.displayName || 'Officier CDS',
-      role: 'DIRECTEUR_GENERAL',
-      department: 'Direction Générale',
+      role: 'EN_ATTENTE',
+      department: 'Non affecté',
       status: 'active'
     };
   }
 };
 
 /**
- * Met à jour le rôle d'un utilisateur (Réservé au CEO et au DG)
+ * Met à jour le rôle d'un utilisateur (Réservé au DG et au CEO)
  */
 export const updateUserRole = async (targetUid, newRole, updatedByUid) => {
   try {
     const userRef = doc(db, 'users', targetUid);
+    const roleInfo = ROLES[newRole];
     await updateDoc(userRef, {
       role: newRole,
+      department: roleInfo?.label || newRole,
       updatedAt: new Date().toISOString(),
       updatedBy: updatedByUid
     });
@@ -70,7 +76,7 @@ export const updateUserRole = async (targetUid, newRole, updatedByUid) => {
     await logSecurityEvent(
       updatedByUid, 
       'ROLE_UPDATED', 
-      `Changement de rôle de l'utilisateur ${targetUid} vers ${newRole}`
+      `Nomination de l'utilisateur ${targetUid} au poste : ${newRole}`
     );
     return true;
   } catch (error) {
@@ -89,6 +95,8 @@ export const getAllUsers = async () => {
     querySnapshot.forEach((doc) => {
       users.push({ id: doc.id, ...doc.data() });
     });
+    // Trier par date d'inscription
+    users.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     return users;
   } catch (error) {
     console.error("Erreur récupération utilisateurs:", error);

@@ -3,89 +3,6 @@ import { db } from '../firebase';
 import { collection, addDoc, getDocs, updateDoc, doc, query, orderBy } from 'firebase/firestore';
 import { logSecurityEvent } from './rbacService';
 
-// Contacts CRM de démonstration pour Capital du Savoir
-const DEMO_CRM_CONTACTS = [
-  {
-    id: "CRM-2026-001",
-    name: "Dr. Aminata Diallo",
-    type: "partner",
-    organization: "Fondation Innovation & Éducation",
-    email: "a.diallo@innoveduc.org",
-    phone: "+221 77 123 45 67",
-    status: "active",
-    notes: "Partenaire clé pour la fourniture des bourses d'études et le matériel informatique.",
-    dealValue: 25000000,
-    assignedToName: "Responsable Opérations",
-    createdAt: new Date(Date.now() - 86400000 * 10).toISOString()
-  },
-  {
-    id: "CRM-2026-002",
-    name: "Marc Antoine Moreau",
-    type: "ambassador",
-    organization: "Réseau Ambassadeurs CDS - Paris",
-    email: "m.moreau@ambassadeurs-cds.org",
-    phone: "+33 6 98 76 54 32",
-    status: "active",
-    notes: "Ambassadeur d'honneur chargé du rayonnement international et du recrutement étudiant.",
-    dealValue: 0,
-    assignedToName: "Responsable Opérations",
-    createdAt: new Date(Date.now() - 86400000 * 15).toISOString()
-  },
-  {
-    id: "CRM-2026-003",
-    name: "Société Tech&Savoir S.A.",
-    type: "sponsor",
-    organization: "Tech&Savoir",
-    email: "contact@techsavoir.com",
-    phone: "+226 25 30 00 11",
-    status: "prospect",
-    notes: "Projet de sponsoring pour la compétition de hacking et d'IA académique.",
-    dealValue: 10000000,
-    assignedToName: "Responsable Opérations",
-    createdAt: new Date(Date.now() - 86400000 * 4).toISOString()
-  }
-];
-
-// Termes de Référence (TDR) de projets de démonstration
-const DEMO_TDR_PROJECTS = [
-  {
-    id: "TDR-2026-001",
-    title: "TDR - Organisation du Hackathon National IA & Éducation 2026",
-    context: "Dans le cadre de l'expansion du Pôle Innovation de Capital du Savoir, cet événement vise à réunir 200 étudiants et chercheurs.",
-    objectives: "Stimuler l'innovation pédagogique, concevoir 5 prototypes d'IA éducatives et signer 3 nouveaux partenariats.",
-    targetAudience: "Étudiants en Informatique, Enseignants-Chercheurs et Entreprises Tech.",
-    budget: 8500000,
-    timeline: "15 Octobre 2026 - 18 Octobre 2026",
-    deliverables: [
-      "5 applications IA fonctionnelles",
-      "Rapport final d'évaluation et de presse",
-      "Convention de stage pour les 3 équipes gagnantes"
-    ],
-    status: "pending_approval",
-    createdBy: "ops-uid",
-    createdByName: "Responsable Opérations & Logistique",
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
-  },
-  {
-    id: "TDR-2026-002",
-    title: "TDR - Digitalisation Intégrale de la Bibliothèque Pédagogique",
-    context: "Mise en place d'une plateforme d'accès en ligne aux manuels scolaires et publications pour tous les étudiants CDS.",
-    objectives: "Acquérir 1000 licences d'ouvrages numériques et déployer un serveur de consultation sécurisé.",
-    targetAudience: "Ensemble de la communauté éducative Capital du Savoir.",
-    budget: 12000000,
-    timeline: "01 Septembre 2026 - 30 Novembre 2026",
-    deliverables: [
-      "Plateforme web E-Library CDS opérationnelle",
-      "Catalogue de 1000 livres indexés"
-    ],
-    status: "approved",
-    createdBy: "secgen-uid",
-    createdByName: "Secrétaire Général",
-    approvedBy: "ceo-uid",
-    createdAt: new Date(Date.now() - 86400000 * 12).toISOString()
-  }
-];
-
 const STORAGE_CRM_KEY = 'imperium_cds_crm_contacts';
 const STORAGE_TDR_KEY = 'imperium_cds_tdr_projects';
 
@@ -114,7 +31,7 @@ export const addCrmContact = async (contactData, user) => {
 };
 
 /**
- * Récupère les contacts du CRM
+ * Récupère les contacts du CRM (État 0 : aucun contact par défaut)
  */
 export const getCrmContacts = async () => {
   try {
@@ -122,11 +39,11 @@ export const getCrmContacts = async () => {
     const snap = await getDocs(q);
     const list = [];
     snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-    if (list.length > 0) return list;
+    return list;
   } catch (e) {
-    console.warn("Utilisation contacts CRM démo locaux:", e);
+    console.warn("Erreur chargement CRM Firestore:", e);
+    return getLocalCrmContacts();
   }
-  return getLocalCrmContacts();
 };
 
 /**
@@ -155,7 +72,7 @@ export const createTdrProject = async (tdrData, user) => {
 };
 
 /**
- * Récupère les projets TDR
+ * Récupère les projets TDR (État 0 : aucun projet par défaut)
  */
 export const getTdrProjects = async () => {
   try {
@@ -163,11 +80,11 @@ export const getTdrProjects = async () => {
     const snap = await getDocs(q);
     const list = [];
     snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-    if (list.length > 0) return list;
+    return list;
   } catch (e) {
-    console.warn("Utilisation TDR démo locaux:", e);
+    console.warn("Erreur chargement TDR Firestore:", e);
+    return getLocalTdrProjects();
   }
-  return getLocalTdrProjects();
 };
 
 /**
@@ -205,14 +122,13 @@ export const vetoTdrProject = async (tdrId, userId, vetoReason) => {
   }
 };
 
-// STOCKAGE LOCAL HELPERS
+// STOCKAGE LOCAL HELPERS ÉTAT 0
 const getLocalCrmContacts = () => {
   try {
     const data = localStorage.getItem(STORAGE_CRM_KEY);
     if (data) return JSON.parse(data);
   } catch (e) {}
-  localStorage.setItem(STORAGE_CRM_KEY, JSON.stringify(DEMO_CRM_CONTACTS));
-  return DEMO_CRM_CONTACTS;
+  return [];
 };
 
 const getLocalTdrProjects = () => {
@@ -220,8 +136,7 @@ const getLocalTdrProjects = () => {
     const data = localStorage.getItem(STORAGE_TDR_KEY);
     if (data) return JSON.parse(data);
   } catch (e) {}
-  localStorage.setItem(STORAGE_TDR_KEY, JSON.stringify(DEMO_TDR_PROJECTS));
-  return DEMO_TDR_PROJECTS;
+  return [];
 };
 
 const updateLocalTdrStatus = (tdrId, status, extra = {}) => {

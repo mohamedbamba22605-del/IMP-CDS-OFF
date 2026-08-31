@@ -1,52 +1,7 @@
 // src/services/treasuryService.js
 import { db } from '../firebase';
-import { collection, addDoc, getDocs, updateDoc, doc, query, orderBy, limit } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, doc, query, orderBy } from 'firebase/firestore';
 import { logSecurityEvent } from './rbacService';
-
-// Fallback données initiales pour la démonstration institutionnelle
-const INITIAL_DEMO_TRANSACTIONS = [
-  {
-    id: "TX-2026-001",
-    type: "income",
-    amount: 15500000,
-    category: "frais_scolarite",
-    description: "Recouvrement frais de scolarité Semestre 1 - Capital du Savoir",
-    proofUrl: "data:application/pdf;base64,JVBERi0xLjQKJ...", // Simulé
-    proofFileName: "Recu_Scolarite_S1_CDS.pdf",
-    status: "approved",
-    createdBy: "finance-uid",
-    createdByName: "Responsable Financière",
-    approvedBy: "ceo-uid",
-    createdAt: new Date(Date.now() - 86400000 * 3).toISOString()
-  },
-  {
-    id: "TX-2026-002",
-    type: "expense",
-    amount: 3200000,
-    category: "equipement",
-    description: "Acquisition de 10 serveurs et matériel informatique pour le Lab IA",
-    proofUrl: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-    proofFileName: "Facture_Materiel_LabIA_CDS.png",
-    status: "pending_approval",
-    createdBy: "finance-uid",
-    createdByName: "Responsable Financière",
-    createdAt: new Date(Date.now() - 86400000 * 1).toISOString()
-  },
-  {
-    id: "TX-2026-003",
-    type: "income",
-    amount: 8000000,
-    category: "subvention",
-    description: "Subvention Partenariat Recherche Éducative & Innovation",
-    proofUrl: "data:application/pdf;base64,JVBERi0xLjQKJ...",
-    proofFileName: "Convention_Subvention_CDS_2026.pdf",
-    status: "approved",
-    createdBy: "ceo-uid",
-    createdByName: "CEO Capital du Savoir",
-    approvedBy: "ceo-uid",
-    createdAt: new Date(Date.now() - 86400000 * 5).toISOString()
-  }
-];
 
 /**
  * Convertit un fichier JS (File) en Data URI Base64 pour le stockage persistant
@@ -78,7 +33,7 @@ export const addTreasuryTransaction = async ({ type, amount, category, descripti
   try {
     proofUrl = await fileToDataUri(proofFile);
   } catch (e) {
-    console.warn("Échec conversion fichier, utilisation fallback:", e);
+    console.warn("Échec conversion fichier:", e);
     proofUrl = "data:text/plain;base64,SlVTVElGSUNBVElGX0NEU19ET0NVTUVOVA==";
   }
 
@@ -100,7 +55,7 @@ export const addTreasuryTransaction = async ({ type, amount, category, descripti
     await logSecurityEvent(user?.uid, 'TREASURY_ENTRY_CREATED', `Saisie trésorerie (${type}) de ${amount} FCFA avec justificatif ${proofFileName}`);
     return { id: docRef.id, ...transactionData };
   } catch (e) {
-    console.warn("Échec Firestore direct, enregistrement local temporaire:", e);
+    console.warn("Enregistrement local fallback:", e);
     const localTx = { id: `TX-${Date.now()}`, ...transactionData };
     saveLocalTransaction(localTx);
     return localTx;
@@ -108,7 +63,7 @@ export const addTreasuryTransaction = async ({ type, amount, category, descripti
 };
 
 /**
- * Récupère toutes les transactions de trésorerie
+ * Récupère toutes les transactions de trésorerie (État 0 : aucune transaction par défaut)
  */
 export const getTreasuryTransactions = async () => {
   try {
@@ -116,11 +71,11 @@ export const getTreasuryTransactions = async () => {
     const snap = await getDocs(q);
     const list = [];
     snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-    if (list.length > 0) return list;
+    return list;
   } catch (e) {
-    console.warn("Erreur chargement Firestore, utilisation données de démo:", e);
+    console.warn("Erreur chargement Firestore Trésorerie:", e);
+    return getLocalTransactions();
   }
-  return getLocalTransactions();
 };
 
 /**
@@ -136,7 +91,7 @@ export const approveTransaction = async (txId, userId) => {
     });
     await logSecurityEvent(userId, 'TREASURY_APPROVED', `Validation de la transaction ${txId}`);
   } catch (e) {
-    console.warn("Mise à jour Firestore échouée, mise à jour local:", e);
+    console.warn("Mise à jour Firestore échouée, local fallback:", e);
     updateLocalTransactionStatus(txId, 'approved', { approvedBy: userId });
   }
 };
@@ -155,12 +110,12 @@ export const vetoTransaction = async (txId, userId, vetoReason) => {
     });
     await logSecurityEvent(userId, 'TREASURY_VETOED', `VETO CEO appliqué sur la transaction ${txId}: ${vetoReason}`);
   } catch (e) {
-    console.warn("Mise à jour Firestore échouée, mise à jour local:", e);
+    console.warn("Mise à jour Firestore échouée, local fallback:", e);
     updateLocalTransactionStatus(txId, 'vetoed', { vetoedBy: userId, vetoReason });
   }
 };
 
-// --- GESTION STOCKAGE LOCAL FALLBACK ---
+// --- GESTION STOCKAGE LOCAL FALLBACK (ÉTAT 0 PROPRE) ---
 const STORAGE_KEY = 'imperium_cds_treasury';
 
 const getLocalTransactions = () => {
@@ -168,8 +123,7 @@ const getLocalTransactions = () => {
     const data = localStorage.getItem(STORAGE_KEY);
     if (data) return JSON.parse(data);
   } catch (e) {}
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_DEMO_TRANSACTIONS));
-  return INITIAL_DEMO_TRANSACTIONS;
+  return [];
 };
 
 const saveLocalTransaction = (tx) => {
