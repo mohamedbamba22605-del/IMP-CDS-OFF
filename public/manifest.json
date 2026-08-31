@@ -1,0 +1,47 @@
+{
+  "name": "Imperium-CDS-Edition",
+  "short_name": "IMP-CDS",
+  "description": "ERP Institutionnel Capital du Savoir — Audace · Innovation · Vision",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A1128",
+  "theme_color": "#D4AF37",
+  "orientation": "any",
+  "lang": "fr",
+  "scope": "/",
+  "categories": ["business", "education", "productivity"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Citadelle — Finances",
+      "short_name": "Citadelle",
+      "url": "/?tab=citadelle",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Radio QG — Rapports",
+      "short_name": "Radio QG",
+      "url": "/?tab=radio_qg",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
