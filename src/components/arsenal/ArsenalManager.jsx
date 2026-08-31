@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import MiniCRM from './MiniCRM';
 import TDRManager from './TDRManager';
-import { Briefcase, FileText, UserPlus } from '../ui/Icons';
+import { Briefcase, FileText } from '../ui/Icons';
 import { getCrmContacts, addCrmContact, getTdrProjects, createTdrProject, approveTdrProject, vetoTdrProject } from '../../services/crmService';
 
 export default function ArsenalManager({ currentUser }) {
@@ -52,31 +52,31 @@ export default function ArsenalManager({ currentUser }) {
   };
 
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in duration-300">
-      {/* ARSENAL NAVIGATION SECONDAIRE */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+    <div className="space-y-5 sm:space-y-6 pb-12 animate-in fade-in duration-300">
+      {/* ARSENAL NAVIGATION SECONDAIRE SCROLLABLE */}
+      <div className="flex items-center gap-1.5 sm:gap-2 border-b border-slate-800 pb-2.5 sm:pb-3 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveSubTab('crm')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
             activeSubTab === 'crm'
               ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-lg'
               : 'text-gray-400 hover:text-white bg-slate-900/60'
           }`}
         >
-          <Briefcase className="w-4 h-4" />
-          <span>Mini-CRM (Partenaires & Ambassadeurs)</span>
+          <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span>Mini-CRM Partenaires</span>
         </button>
 
         <button
           onClick={() => setActiveSubTab('tdr')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
             activeSubTab === 'tdr'
               ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-lg'
               : 'text-gray-400 hover:text-white bg-slate-900/60'
           }`}
         >
-          <FileText className="w-4 h-4" />
-          <span>Gestionnaire de Termes de Référence (TDR)</span>
+          <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span>Termes de Référence (TDR)</span>
         </button>
       </div>
 

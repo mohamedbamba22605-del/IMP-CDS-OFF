@@ -14,7 +14,7 @@ export default function JarvisAssistant({ currentUser, onSendTdrToArsenal }) {
   const [chatMessages, setChatMessages] = useState([
     {
       sender: 'jarvis',
-      text: "Bonjour Officier. Je suis Jarvis, l'assistant IA institutionnel de Capital du Savoir. Comment puis-je vous aider dans la gestion administrative, la rédaction de TDR ou la communication aujourd'hui ?"
+      text: "Bonjour. Je suis Jarvis, l'assistant IA institutionnel de Capital du Savoir. Comment puis-je vous aider dans la rédaction de TDR, la communication ou les procédures internes aujourd'hui ?"
     }
   ]);
   const [chatInput, setChatInput] = useState('');
@@ -50,7 +50,7 @@ export default function JarvisAssistant({ currentUser, onSendTdrToArsenal }) {
         ...prev,
         {
           sender: 'jarvis',
-          text: `[Jarvis CDS] Concernant "${userText}", conformément au règlement intérieur et aux directives exécutoires de Capital du Savoir, les procédures prévoient la soumission d'un reporting triennal au Secrétariat Général et l'accord préalable de la Direction.`
+          text: `[Jarvis CDS] Concernant "${userText}", conformément au règlement intérieur et aux directives exécutoires de Capital du Savoir (Note N°0002), les procédures prévoient la soumission d'un reporting triennal au Secrétariat Général et la validation préalable de la Direction.`
         }
       ]);
       setChatLoading(false);
@@ -60,28 +60,29 @@ export default function JarvisAssistant({ currentUser, onSendTdrToArsenal }) {
   const quotaPercent = Math.min(100, Math.round((quota.count / quota.limit) * 100));
 
   return (
-    <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+    <div className="space-y-5 sm:space-y-6 pb-12 animate-in fade-in duration-300">
+
       {/* HEADER QUOTA FIRESTORE JARVIS */}
-      <div className="p-6 bg-gradient-to-r from-[#0A1128] via-[#0B192C] to-[#1E1B4B] border border-cyan-500/30 rounded-3xl shadow-2xl text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="p-4 sm:p-6 bg-gradient-to-r from-[#0A1128] via-[#0B192C] to-[#1E1B4B] border border-cyan-500/30 rounded-2xl sm:rounded-3xl shadow-2xl text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="p-3.5 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl text-black font-black shadow-lg shadow-cyan-500/20">
-            <Cpu className="w-8 h-8" />
+          <div className="p-3 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-2xl text-black font-black shadow-lg shadow-cyan-500/20 shrink-0">
+            <Cpu className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black text-white uppercase tracking-wider font-serif">Jarvis IA Intégrée</h1>
-              <span className="px-2.5 py-0.5 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-full text-[10px] font-mono font-bold">
-                Firestore Quota Active
+              <h1 className="text-base sm:text-2xl font-black text-white uppercase tracking-wider font-serif">Jarvis IA Intégrée</h1>
+              <span className="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-full text-[9px] sm:text-[10px] font-mono font-bold">
+                Quota Firestore
               </span>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Assistant rédactionnel d'élite pour les Termes de Référence (TDR) et les médias sociaux.
+            <p className="text-[11px] sm:text-xs text-gray-400 mt-0.5">
+              Assistant rédactionnel d'élite pour les TDR et les médias sociaux.
             </p>
           </div>
         </div>
 
         {/* INDICATEUR DE QUOTA D'API DANS FIRESTORE */}
-        <div className="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl font-mono text-xs w-full md:w-72 shadow-inner">
+        <div className="p-3.5 sm:p-4 bg-slate-900/80 border border-slate-800 rounded-2xl font-mono text-xs w-full md:w-72 shadow-inner">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-gray-400 text-[10px] uppercase font-bold">Quota Mensuel API :</span>
             <span className="text-cyan-300 font-extrabold">{quota.count} / {quota.limit}</span>
@@ -101,41 +102,41 @@ export default function JarvisAssistant({ currentUser, onSendTdrToArsenal }) {
         </div>
       </div>
 
-      {/* NAVIGATION SECONDAIRE JARVIS */}
-      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+      {/* NAVIGATION SECONDAIRE JARVIS SCROLLABLE */}
+      <div className="flex items-center gap-1.5 sm:gap-2 border-b border-slate-800 pb-2.5 sm:pb-3 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveSubTab('tdr')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
             activeSubTab === 'tdr'
               ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-lg'
               : 'text-gray-400 hover:text-white bg-slate-900/60'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
-          <span>Générateur de TDR</span>
+          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span>Générateur TDR</span>
         </button>
 
         <button
           onClick={() => setActiveSubTab('social')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
             activeSubTab === 'social'
               ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 shadow-lg'
               : 'text-gray-400 hover:text-white bg-slate-900/60'
           }`}
         >
-          <Globe className="w-4 h-4" />
-          <span>Posts Réseaux Sociaux</span>
+          <Globe className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span>Posts Réseaux</span>
         </button>
 
         <button
           onClick={() => setActiveSubTab('chat')}
-          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+          className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap shrink-0 ${
             activeSubTab === 'chat'
               ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-lg'
               : 'text-gray-400 hover:text-white bg-slate-900/60'
           }`}
         >
-          <MessageSquare className="w-4 h-4" />
+          <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           <span>Chat Institutionnel</span>
         </button>
       </div>
@@ -157,10 +158,10 @@ export default function JarvisAssistant({ currentUser, onSendTdrToArsenal }) {
       )}
 
       {activeSubTab === 'chat' && (
-        <div className="p-6 bg-[#0B192C]/90 border border-slate-800 rounded-3xl backdrop-blur-md shadow-2xl text-white space-y-4 font-sans">
+        <div className="p-4 sm:p-6 bg-[#0B192C]/90 border border-slate-800 rounded-2xl sm:rounded-3xl backdrop-blur-md shadow-2xl text-white space-y-4 font-sans">
           <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <MessageSquare className="w-5 h-5 text-indigo-400" />
-            <h3 className="text-sm font-bold uppercase tracking-wider text-white font-serif">
+            <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
+            <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-white font-serif">
               Dialogue Direct avec Jarvis CDS
             </h3>
           </div>
@@ -195,13 +196,13 @@ export default function JarvisAssistant({ currentUser, onSendTdrToArsenal }) {
               type="text"
               value={chatInput}
               onChange={(e) => setChatInput(e.target.value)}
-              placeholder="Posez votre question sur les procédures, règlements ou projets..."
-              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:border-indigo-400 font-sans"
+              placeholder="Posez votre question sur les procédures, règlements..."
+              className="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-2.5 sm:py-3 text-xs text-white focus:outline-none focus:border-indigo-400 font-sans"
             />
             <button
               type="submit"
               disabled={!chatInput.trim() || chatLoading}
-              className="px-5 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs uppercase rounded-xl transition-all flex items-center gap-1.5"
+              className="px-4 sm:px-5 py-2.5 sm:py-3 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white font-bold text-xs uppercase rounded-xl transition-all flex items-center gap-1.5 shrink-0"
             >
               <Send className="w-4 h-4" />
             </button>
